@@ -175,13 +175,14 @@ namespace ModLib
             string moduleLoadablesPath = Path.Combine(modulePath, "ModuleData", LoadablesFolderName);
             if (Directory.Exists(moduleLoadablesPath))
             {
+                List<string> load_files = new List<string>();
                 try
                 {
                     //If the module has a Loadables folder, loop through it and load all the files.
                     //Starting with the files in the root folder
                     foreach (var filePath in Directory.GetFiles(moduleLoadablesPath, "*.xml"))
                     {
-                        LoadFromFile(filePath);
+                        load_files.Add(filePath);
                     }
 
                     //Loop through any subfolders and load the files in them
@@ -192,21 +193,26 @@ namespace ModLib
                         {
                             foreach (var filePath in Directory.GetFiles(subDir, "*.xml"))
                             {
-                                try
-                                {
-                                    LoadFromFile(filePath);
-                                }
-                                catch(Exception ex)
-                                {
-                                    ModDebug.LogError($"Failed to load file: {filePath} \n\nSkipping..\n\n", ex);
-                                }
+                                load_files.Add(filePath);
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception($"An error occurred while FileDatabase was trying to load all files for module {moduleName}", ex);
+                    throw new Exception($"An error occurred while FileDatabase was trying to find all files for module {moduleName}", ex);
+                }
+
+                foreach (string filePath in load_files)
+                {
+                    try
+                    {
+                        LoadFromFile(filePath);
+                    }
+                    catch
+                    {
+                        ModDebug.ShowMessage($"A file ({filePath}) failed to load.\n\nThis may prevent the {moduleName} from running correctly, or your settings may be missing", $"File failed to load ({moduleName})");
+                    }
                 }
             }
             else
